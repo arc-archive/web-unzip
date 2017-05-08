@@ -340,8 +340,11 @@ Polymer({
     // https://github.com/gildas-lormeau/zip.js/issues/172. Need to check it.
     var keys = Object.keys(_dirs);
     keys.forEach(function(dir) {
+      if (!dir || dir === '/') {
+        this._ensureChildren(_dirs[dir].children, result);
+        return;
+      }
       if (!this._inStructure(dir, result)) {
-        console.log('Missing structure for', dir);
         var entry = this._createStructurePath(dir, result);
         entry.children = _dirs[path].children;
       }
@@ -415,6 +418,28 @@ Polymer({
       }
     }
     return entry;
+  },
+  /**
+   * Ensures that `childrent` are added to the `structure`
+   *
+   * @param {Array<Entry>} children List of children to check. Items are entries returned by the
+   * zpi.js library.
+   * @param {Array<Entry>} structure List of children in current structure.
+   */
+  _ensureChildren: function(children, structure) {
+    for (var i = 0, len = children.length; i < len; i++) {
+      var item = children[i];
+      var has = false;
+      for (var j = 0, lenS = structure.length; j < lenS; j++) {
+        if (item.filename === structure[j].filename) {
+          has = true;
+          break;
+        }
+      }
+      if (!has) {
+        structure.push(item);
+      }
+    }
   },
 
   _createDirectory: function(path) {
