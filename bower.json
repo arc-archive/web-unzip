@@ -1,0 +1,54 @@
+{
+  "name": "web-unzip",
+  "description": "A web component that unzips files",
+  "version": "0.0.1",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "authors": [
+    "The Advanced REST client authors <arc@mulesoft.com>"
+  ],
+  "keywords": [
+    "web-components",
+    "polymer",
+    "zip",
+    "unzpi"
+  ],
+  "private": true,
+  "main": [
+    "web-unzip.html"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:advanced-rest-client/web-unzip.git"
+  },
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.0.0",
+    "paper-spinner": "PolymerElements/paper-spinner#^1.2.1",
+    "promise-polyfill": "taylorhakes/promise-polyfill#^6.0.2"
+  },
+  "devDependencies": {
+    "iron-component-page": "polymerelements/iron-component-page#1.0.0",
+    "web-component-tester": "^4.0.0",
+    "paper-styles": "polymerelements/paper-styles#^1.0.2",
+    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^1.0.0",
+    "iron-test-helpers": "PolymerElements/iron-test-helpers#^1.0.0",
+    "test-fixture": "PolymerElements/test-fixture#^1.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0",
+    "file-drop": "advanced-rest-client/file-drop#^1.0.2",
+    "paper-item": "PolymerElements/paper-item#^1.2.2",
+    "paper-toolbar": "PolymerElements/paper-toolbar#^1.1.7",
+    "iron-icons": "PolymerElements/iron-icons#^1.2.1",
+    "paper-icon-button": "PolymerElements/paper-icon-button#^1.1.6",
+    "iron-icon": "PolymerElements/iron-icon#^1.0.13"
+  },
+  "ignore": [
+    "**/.*",
+    "dependencyci.yml",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tasks"
+  ],
+  "resolutions": {
+    "promise-polyfill": "^1.0.0"
+  }
+}

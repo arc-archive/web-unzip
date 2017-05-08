@@ -1,0 +1,190 @@
+
+<link rel="import" href="../../paper-item/paper-icon-item.html">
+<link rel="import" href="../../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../../iron-icon/iron-icon.html">
+<link rel="import" href="../../iron-icons/iron-icons.html">
+<link rel="import" href="../../iron-icons/editor-icons.html">
+<link rel="import" href="../../paper-toolbar/paper-toolbar.html">
+<link rel="import" href="../../paper-icon-button/paper-icon-button.html">
+
+<dom-module id="folder-browser">
+  <template>
+    <style>
+       :host {
+        display: block;
+      }
+    </style>
+    <files-list folder="[[folder]]" current-name="[[currentName]]" parent-path="[[parentPath]]" on-back="_openFolder"></files-list>
+  </template>
+  <script>
+    Polymer({
+      is: 'folder-browser',
+      properties: {
+        files: {
+          type: Array,
+          observer: '_filesChnaged'
+        },
+        folder: Array,
+        currentName: String
+      },
+
+      _filesChnaged: function(files) {
+        this.folder = files;
+        this.currentName = '/';
+        this.parentPath = '/';
+      },
+
+      _openFolder: function (e) {
+        this.folder = undefined;
+        this.currentName = undefined;
+        this.parentPath = '/';
+
+        var folder = e.detail.folder;
+        if (!folder || folder === '/') {
+          this.folder = this.files;
+          this.currentName = '/';
+          return;
+        }
+        if (folder[folder.length - 1] === '/') {
+          folder = folder.substr(0, folder.length - 1);
+        }
+
+        var path = folder.split('/');
+        var structure = this.files;
+
+        var currentPath = '';
+        while (true) {
+          var _name = path.shift();
+          if (!_name) {
+            break;
+          }
+          currentPath += _name + '/';
+          for (var i = 0, len = structure.length; i < len; i++) {
+            if (structure[i].directory && structure[i].filename === currentPath) {
+              structure = structure[i];
+            }
+          }
+        }
+        this.folder = structure.children;
+        this.currentName = structure.name;
+        var name = structure.filename;
+        name = name.substr(0, name.length - 1);
+        path = name.split('/');
+        path.pop();
+        if (path.length) {
+          this.parentPath = path.join('/') + '/';
+        } else {
+          this.parentPath = undefined;
+          this.parentPath = '/';
+        }
+      }
+    });
+  </script>
+</dom-module>
+
+
+<dom-module id="files-list">
+  <template>
+    <style>
+    :host {
+      display: block;
+    }
+
+    .folder-name {
+      cursor: pointer;
+      @apply(--layout-flex);
+    }
+
+    .folder-name:hover {
+      text-decoration: underline;
+    }
+
+    .file-name {
+      @apply(--layout-flex);
+    }
+
+    .hiddable {
+      display: none;
+    }
+
+    .hiddable[visible] {
+      display: block;
+    }
+
+    iron-icon {
+      color: #607D8B;
+    }
+
+    paper-toolbar {
+      background: #2196F3;
+    }
+    </style>
+    <paper-toolbar>
+      <paper-icon-button icon="icons:arrow-back" on-tap="back" class="hiddable" visible$="[[hasParent(parentPath)]]"></paper-icon-button>
+      <div class="title">[[currentName]]</div>
+    </paper-toolbar>
+    <template is="dom-repeat"items="[[folder]]">
+      <paper-icon-item on-tap="openDirectory">
+        <iron-icon icon="[[computeIcon(item.directory)]]" item-icon></iron-icon>
+        <span class$="[[computeClass(item.directory)]]">[[item.name]]</span>
+        <paper-icon-button icon="icons:file-download" on-tap="downloadFile" hidden$="[[item.directory]]"></paper-icon-button>
+      </paper-icon-item>
+    </template>
+  </template>
+  <script>
+    Polymer({
+      is: 'files-list',
+
+      properties: {
+        folder: Array,
+        currentName: String,
+        parentPath: String
+      },
+
+      computeIcon: function(directory) {
+        return directory ? 'icons:folder' : 'editor:insert-drive-file';
+      },
+
+      computeClass: function (directory) {
+        return directory ? 'folder-name' : 'file-name';
+      },
+
+      openDirectory: function(e) {
+        var model = e.model.get('item');
+        if (!model.directory) {
+          return this.downloadFile(e);
+        }
+        var file = model.filename;
+        if (file[file.length -1] === '/') {
+          file = file.substr(0, file.length - 1);
+        }
+        var path = file.split('/');
+        this.currentName = path.pop();
+        var parentPath = path.join('/');
+        parentPath += '/';
+        this.folder = model.children;
+        this.parentPath = parentPath;
+      },
+
+      downloadFile: function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        var model = e.model.get('item');
+        this.fire('download-file', {
+          filename: model.filename
+        });
+      },
+
+      back: function() {
+        this.fire('back', {
+          folder: this.parentPath
+        });
+      },
+
+      hasParent: function(parentPath) {
+        return !!parentPath;
+      }
+    });
+  </script>
+</dom-module>
