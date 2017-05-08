@@ -12,7 +12,7 @@ License for the specific language governing permissions and limitations under
 the License.
 -->
 <link rel="import" href="../polymer/polymer.html">
-<link rel="import" href="../promise-polyfill/promise-polyfill.html">
+<link rel="import" href="../arc-polyfills/arc-polyfills.html">
 <link rel="import" href="zipjs-imports.html">
 <!--
 `<web-unzip>` A web component that unzips files.
@@ -26,7 +26,7 @@ TODO:
 - add test
 
 ### Killing the web worker
-The zip.js library uses web worker to unzip files. Each time the `file` property change 
+The zip.js library uses web worker to unzip files. Each time the `file` property change
 previously created web worker will be killed and removed from memory.
 You can call the `closeLastReader()` function to close the worker manually. Later read file content will be not possible.
 
@@ -135,256 +135,440 @@ h.avail_out);var G=new Uint8Array(E);z.forEach(function(a){G.set(a,x);x+=a.lengt
     </script>
   </template>
   <script>
-  Polymer({
-    is: 'web-unzip',
-    properties: {
-      /**
-       * A file object returned by the `<file type="input">` or drop event.
-       * Drop event always return FileList object which contains a list of files dropped so
-       * this property expect iterable even if there will be only single file.
-       */
-      file: Array,
-      /**
-       * The folder structure read from the zip file.
-       * See overview for schema.
-       */
-      fileStucture: {
-        type: Array,
-        notify: true,
-        readOnly: true
-      },
-      /**
-       * Unizpped filesystem.
-       */
-      result: {
-        type: Object,
-        readOnly: true,
-        notify: true
-      },
-      _entriesListener: {
-        type: Object,
-        value: function() {
-          return this._entriesHandler.bind(this);
-        }
-      },
-      _errorListener: {
-        type: Object,
-        value: function() {
-          return this._errorHandler.bind(this);
-        }
+Polymer({
+  is: 'web-unzip',
+  properties: {
+    /**
+     * A file object returned by the `<file type="input">` or drop event.
+     * Drop event always return FileList object which contains a list of files dropped so
+     * this property expect iterable even if there will be only single file.
+     */
+    file: Array,
+    /**
+     * The folder structure read from the zip file.
+     * See overview for schema.
+     */
+    fileStructure: {
+      type: Array,
+      notify: true,
+      readOnly: true
+    },
+    /**
+     * Unizpped filesystem.
+     */
+    result: {
+      type: Object,
+      readOnly: true,
+      notify: true
+    },
+    /**
+     * If set, the `web-unzip-file-structure` and `web-unzip-read` events will fire an event
+     * with flat structure of files instead of complex object.
+     *
+     * Note, this will not affect the `fileStructure` property which will always contain
+     * complex file structure.
+     */
+    flatStructure: Boolean,
+    /**
+     * If set it will read zip files content automatically after reading it's structure.
+     *
+     * This will update the `fileStrucure` property more than once. First when the structure has
+     * been read and then again when files content is read.
+     *
+     * Both `web-unzip-file-structure` and `web-unzip-read` custom events will be fired.
+     */
+    autoRead: Boolean,
+
+    _entriesListener: {
+      type: Object,
+      value: function() {
+        return this._entriesHandler.bind(this);
       }
     },
-
-    observers: ['_fileChnaged(file)'],
-
-    detached: function() {
-      this.closeLastReader();
-    },
-
-    // Resets element state
-    reset: function() {
-      this._setResult(undefined);
-      this._setFileStucture(undefined);
-    },
-
-    _createWorker: function() {
-      if (this._workerUrl) {
-        return;
+    _errorListener: {
+      type: Object,
+      value: function() {
+        return this._errorHandler.bind(this);
       }
-      var blob = new Blob([this.$.worker.textContent]);
-      this._workerUrl = window.URL.createObjectURL(blob);
-      zip.workerScripts = {
-        deflater: [this._workerUrl],
-        inflater: [this._workerUrl]
-      };
-    },
+    }
+  },
 
-    _fileChnaged: function(file) {
-      if (!file || file.length !== 1) {
-        this.reset();
-        return;
-      }
-      var source = file[0];
-      if (!source.type || source.type.indexOf('zip') === -1) {
-        this.reset();
-        return;
-      }
-      this._createWorker();
-      this.closeLastReader()
+  observers: ['_fileChnaged(file)'],
+
+  detached: function() {
+    this.closeLastReader();
+  },
+
+  // Resets element state
+  reset: function() {
+    this._setResult(undefined);
+    this._setFileStructure(undefined);
+  },
+
+  _createWorker: function() {
+    if (this._workerUrl) {
+      return;
+    }
+    var blob = new Blob([this.$.worker.textContent]);
+    this._workerUrl = window.URL.createObjectURL(blob);
+    zip.workerScripts = {
+      deflater: [this._workerUrl],
+      inflater: [this._workerUrl]
+    };
+  },
+
+  _fileChnaged: function(file) {
+    if (!file || file.length !== 1) {
+      this.reset();
+      return;
+    }
+    var source = file[0];
+    if (!source.type || source.type.indexOf('zip') === -1) {
+      this.reset();
+      return;
+    }
+    this._createWorker();
+    this.closeLastReader()
       .then(function() {
         zip.createReader(new zip.BlobReader(source), function(zipReader) {
           this._zipReader = zipReader;
           zipReader.getEntries(this._entriesListener);
         }.bind(this), this._errorListener);
       }.bind(this));
-      //READ: https://gildas-lormeau.github.io/zip.js/core-api.html
-    },
-    /**
-     * Manually close the web worker created by previous zip file read.
-     * 
-     * @return {Promise} A promise that resolves when the web worker was killed.
-     */
-    closeLastReader: function() {
-      if (!this._zipReader) {
-        return Promise.resolve();
-      }
-      return new Promise(function(resolve) {
-        this._zipReader.close(function() {
-          this._zipReader = undefined;
-          resolve();
-        }.bind(this));
+    //READ: https://gildas-lormeau.github.io/zip.js/core-api.html
+  },
+  /**
+   * Manually close the web worker created by previous zip file read.
+   *
+   * @return {Promise} A promise that resolves when the web worker was killed.
+   */
+  closeLastReader: function() {
+    if (!this._zipReader) {
+      return Promise.resolve();
+    }
+    return new Promise(function(resolve) {
+      this._zipReader.close(function() {
+        this._zipReader = undefined;
+        resolve();
       }.bind(this));
-    },
-
-    _entriesHandler: function(entries) {
-      if (entries.length === 0) {
-        this.fire('web-unzip-file-structure', {
-          fileStucture: []
-        });
-        return;
-      }
-      var structure = this._processFileStructure(entries);
-      this._setFileStucture(structure);
-      this.__flatStructure = entries;
+    }.bind(this));
+  },
+  /**
+   * Called when the zip reader reads all entries.
+   *
+   * @param {Array} entries List of entries.
+   */
+  _entriesHandler: function(entries) {
+    if (entries.length === 0) {
       this.fire('web-unzip-file-structure', {
-        fileStucture: structure
+        fileStructure: []
       });
-    },
+      return;
+    }
 
-    _errorHandler: function(message) {
-      console.error('ERROR', message);
-      this.fire('error', {
-        message: message
-      });
-    },
-    /**
-     * Creates a structure of filesystem of list of all entries in the zip file.
-     *
-     * @param {Array} entries Result of zip.js read.
-     * @return Array Transformed structure.
-     */
-    _processFileStructure: function(entries) {
-      var result = [];
-      var _dirs = {};
-      var len = entries.length;
-      for (var i = 0; i < len; i++) {
-        var entry = entries[i];
-        entry.name = this._computeName(entry);
-        if (entry.directory) {
-          entry.children = [];
-          if (entry.filename in _dirs) {
-            if (_dirs[entry.filename]._preInit) {
-              entry.children = _dirs[entry.filename].children;
-              delete _dirs[entry.filename]._preInit;
-            }
+    if (this.flatStructure) {
+      this._setFileStructure(entries);
+      this.__flatStructure = entries;
+    } else {
+      var structure = this._processFileStructure(entries);
+      this._setFileStructure(structure);
+      this.__flatStructure = entries;
+    }
+    this.fire('web-unzip-file-structure', {
+      fileStructure: this.fileStructure
+    });
+    if (this.autoRead) {
+      this.getAllData();
+    }
+  },
+
+  _errorHandler: function(message) {
+    console.error('ERROR', message);
+    this.fire('error', {
+      message: message
+    });
+  },
+  /**
+   * Creates a structure of filesystem of list of all entries in the zip file.
+   *
+   * @param {Array} entries Result of zip.js read.
+   * @return Array Transformed structure.
+   */
+  _processFileStructure: function(entries) {
+    var result = [];
+    var _dirs = {};
+    var len = entries.length;
+    for (var i = 0; i < len; i++) {
+      var entry = entries[i];
+      entry.name = this._computeName(entry);
+      if (entry.directory) {
+        entry.children = [];
+        if (entry.filename in _dirs) {
+          if (_dirs[entry.filename]._preInit) {
+            entry.children = _dirs[entry.filename].children;
+            delete _dirs[entry.filename]._preInit;
           }
-          _dirs[entry.filename] = entry;
-          var parent = this._pwd(entry.filename);
-          if (!parent) {
-            result.push(entry);
-          } else {
-            if (!(parent in _dirs)) {
-              _dirs[parent] = {
-                children: [entry],
-                _preInit: true
-              };
-            } else {
-              _dirs[parent].children.push(entry);
-            }
-          }
+        }
+        _dirs[entry.filename] = entry;
+        var parent = this._pwd(entry.filename);
+        if (!parent) {
+          result.push(entry);
         } else {
-          var path = this._pwd(entry.filename);
-          if (!(path in _dirs)) {
-            _dirs[path] = {
+          if (!(parent in _dirs)) {
+            _dirs[parent] = {
               children: [entry],
               _preInit: true
             };
           } else {
-            _dirs[path].children.push(entry);
+            _dirs[parent].children.push(entry);
           }
         }
-      }
-      return result;
-    },
-
-    _computeName: function(file) {
-      var name = file.filename;
-      if (file.directory) {
-        name = name.substr(0, name.length - 1);
-      }
-      var index = name.lastIndexOf('/');
-      if (index === -1) {
-        return name;
-      }
-      return name.substr(index + 1);
-    },
-    /**
-     * Computes and returns file's directory path or parent directory.
-     * Returned path may be empty string meaning it's a root path.
-     *
-     * @param {String} filename Full path to the file or directory
-     * @return {String} File's folder.
-     */
-    _pwd: function(filename) {
-      if (!filename || filename === '/') {
-        return '';
-      }
-      if (filename[filename.length - 1] === '/') {
-        filename = filename.substr(0, filename.length - 1);
-      }
-      var index = filename.lastIndexOf('/');
-      if (index < 1) {
-        return '';
-      }
-      return filename.substr(0, index + 1);
-    },
-    /**
-     * Reads data from all files previously listed from the zip file.
-     */
-    getAllData: function() {
-
-    },
-    /**
-     * Reads content of a file and when promise resolves it returns a Blob
-     * wit the data.
-     * 
-     * @param {String} name Filename property of the entry
-     * @return {Promise} Resolved promise returns File object with data.
-     */
-    getFileContent: function(filename) {
-      return new Promise(function(resolve, reject) {
-        var entry = this._getEntry(filename);
-        if (!entry) {
-          reject(new Error('File not found: ' + filename));
-          return;
-        }
-        var writer = new zip.BlobWriter();
-        entry.getData(writer, function(data) {
-          var file = new File([data], entry.name, {
-            // type: ???
-            lastModified: entry.lastModDateRaw
-          });
-          resolve(file);
-        });
-      }.bind(this));
-    },
-    /**
-     * Finds an entry for given file name. It must be the same as 
-     * the `filename` property of the entry item.
-     * 
-     * @param {String} name Filename property of the entry
-     * @return {Object|undefined} File entry for given name or undefined 
-     * if not found.
-     */
-    _getEntry: function(name) {
-      var structure = this.__flatStructure;
-      var len = structure.length;
-      for (var i = 0; i < len; i++) {
-        if (structure[i].filename === name) {
-          return structure[i];
+      } else {
+        var path = this._pwd(entry.filename);
+        if (!(path in _dirs)) {
+          _dirs[path] = {
+            children: [entry],
+            _preInit: true
+          };
+        } else {
+          _dirs[path].children.push(entry);
         }
       }
     }
-  });
-  </script>
+
+    // Now, the _dirs can contain folders that are not in the structure because of
+    // https://github.com/gildas-lormeau/zip.js/issues/172. Need to check it.
+    var keys = Object.keys(_dirs);
+    keys.forEach(function(dir) {
+      if (!this._inStructure(dir, result)) {
+        console.log('Missing structure for', dir);
+        var entry = this._createStructurePath(dir, result);
+        entry.children = _dirs[path].children;
+      }
+    }, this);
+    return result;
+  },
+  /**
+   * Check if given path represented by the `dir` is in the structure.
+   *
+   * @param {String} dir Path to the directory.
+   * @param {Array} structure The complex structure to check.
+   * @return {Boolean} True if directory is in the path.
+   */
+  _inStructure: function(dir, structure) {
+    if (dir[dir.length - 1] === '/') {
+      dir = dir.substr(0, dir.length - 1);
+    }
+    var path = dir.split('/');
+    var currentPath = '';
+    while (true) {
+      if (!structure) {
+        return false;
+      }
+      var _name = path.shift();
+      if (!_name) {
+        break;
+      }
+      currentPath += _name + '/';
+      var hasStructure = false;
+      for (var i = 0, len = structure.length; i < len; i++) {
+        if (structure[i].directory && structure[i].filename === currentPath) {
+          structure = structure[i].children;
+          hasStructure = true;
+          break;
+        }
+      }
+      if (!hasStructure) {
+        return false;
+      }
+    }
+    return true;
+  },
+  /**
+   * Creates a structure for the path and returns the last directory entry created for the path.
+   */
+  _createStructurePath: function(dir, structure) {
+    if (dir[dir.length - 1] === '/') {
+      dir = dir.substr(0, dir.length - 1);
+    }
+    var path = dir.split('/');
+    var currentPath = '';
+    var entry;
+    while (true) {
+      var _name = path.shift();
+      if (!_name) {
+        break;
+      }
+      currentPath += _name + '/';
+      var hasStructure = false;
+      for (var i = 0, len = structure.length; i < len; i++) {
+        if (structure[i].directory && structure[i].filename === currentPath) {
+          structure = structure[i].children;
+          hasStructure = true;
+          break;
+        }
+      }
+      if (!hasStructure) {
+        entry = this._createDirectory(currentPath);
+        structure.push(entry);
+        structure = entry.children;
+      }
+    }
+    return entry;
+  },
+
+  _createDirectory: function(path) {
+    var time = Date.now();
+    var entry = {
+      children: [],
+      comment: '',
+      commentLength: 0,
+      compressedSize: 0,
+      compressionMethod: 0,
+      crc32: 0,
+      directory: true,
+      extraFieldLength: 24,
+      filename: path,
+      filenameLength: path.length,
+      lastModDate: new Date(time),
+      lastModDateRaw: time,
+      uncompressedSize: 0,
+      version: 10
+    };
+    entry.name = this._computeName(entry);
+    return entry;
+  },
+
+  /**
+   * Computes name of file or directory.
+   *
+   * @param {String} file Full path to the file
+   * @return {String} File or directory name. Empty name means root folder.
+   */
+  _computeName: function(file) {
+    var name = file.filename;
+    if (file.directory) {
+      name = name.substr(0, name.length - 1);
+    }
+    var index = name.lastIndexOf('/');
+    if (index === -1) {
+      return name;
+    }
+    return name.substr(index + 1);
+  },
+  /**
+   * Computes and returns file's directory path or parent directory.
+   * Returned path may be empty string meaning it's a root path.
+   *
+   * @param {String} filename Full path to the file or directory
+   * @return {String} File's folder.
+   */
+  _pwd: function(filename) {
+    if (!filename || filename === '/') {
+      return '';
+    }
+    if (filename[filename.length - 1] === '/') {
+      filename = filename.substr(0, filename.length - 1);
+    }
+    var index = filename.lastIndexOf('/');
+    if (index < 1) {
+      return '';
+    }
+    return filename.substr(0, index + 1);
+  },
+  /**
+   * Reads data from all files previously listed files from the zip file.
+   *
+   * Note, this can be called only once per zip file change.
+   * After calling this function the web worker will be closed and further reads will be
+   * impossible.
+   */
+  getAllData: function() {
+    if (!this._zipReader) {
+      var msg = 'Already read. Use the fileStructure property to get the data.';
+      return Promise.reject(new Error(msg));
+    }
+    var structure = this.__flatStructure;
+    var promises = structure.map(function(item) {
+      if (item.directory) {
+        delete item.getData;
+        return Promise.resolve(item);
+      }
+      return this._getEntryContent(item);
+    }, this);
+    return Promise.all(promises)
+    .then(function() {
+      return this.closeLastReader();
+    })
+    .then(function() {
+      this.fire('web-unzip-read', {
+        fileStructure: this.fileStructure
+      });
+      return this.fileStructure;
+    }.bind(this));
+  },
+  /**
+   * Reads content of a file and when promise resolves it returns a Blob
+   * wit the data.
+   *
+   * @param {String} name Filename property of the entry
+   * @return {Promise} Resolved promise returns File object with data.
+   */
+  getFileContent: function(filename) {
+    var entry = this._getEntry(filename);
+    if (!entry) {
+      return Promise.reject(new Error('File not found: ' + filename));
+    }
+    return this._getEntryContent(entry)
+    .then(function(entry) {
+      return entry.content;
+    });
+  },
+  /**
+   * Gets a content from the entry object.
+   *
+   * Note: Unlike the `getAllData()` this function can be called many times because it doesn't
+   * close web worker.
+   *
+   * @param {Object} entry Entry object retuned by the zip reader.
+   * @return {Promise} Resolved promise with the entry object with new `content` property that
+   * contains the File object.
+   */
+  _getEntryContent: function(entry) {
+    if (entry.content) {
+      return Promise.resolve(entry.content);
+    }
+    return new Promise(function(resolve) {
+      var writer = new zip.BlobWriter();
+      entry.getData(writer, function(data) {
+        var file = new File([data], entry.name, {
+          // type: How to extract type?
+          lastModified: entry.lastModDateRaw
+        });
+        delete entry.getData;
+        entry.content = file;
+        resolve(entry);
+      });
+    });
+  },
+
+  /**
+   * Finds an entry for given file name. It must be the same as
+   * the `filename` property of the entry item.
+   *
+   * @param {String} name Filename property of the entry
+   * @return {Object|undefined} File entry for given name or undefined
+   * if not found.
+   */
+  _getEntry: function(name) {
+    var structure = this.__flatStructure;
+    var len = structure.length;
+    for (var i = 0; i < len; i++) {
+      if (structure[i].filename === name) {
+        return structure[i];
+      }
+    }
+  }
+});
+</script>
 </dom-module>

@@ -23,7 +23,7 @@
   "dependencies": {
     "polymer": "Polymer/polymer#^1.0.0",
     "paper-spinner": "PolymerElements/paper-spinner#^1.2.1",
-    "promise-polyfill": "taylorhakes/promise-polyfill#^6.0.2"
+    "arc-polyfills": "advanced-rest-client/arc-polyfills#^0.1.1"
   },
   "devDependencies": {
     "iron-component-page": "polymerelements/iron-component-page#1.0.0",

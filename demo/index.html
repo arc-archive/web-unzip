@@ -43,14 +43,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <div class="vertical-section-container centered">
       <h1>Drop a file here.</h1>
       <file-drop multiple file="{{file}}" on-file-accepted="fileListChanged"></file-drop>
-      <web-unzip id="unzip" file-stucture="{{fileStucture}}"></web-unzip>
+      <web-unzip id="unzip" file-structure="{{fileStructure}}"></web-unzip>
 
       <template is="dom-if" if="[[file]]">
         <paper-spinner active="[[isLoading]]">Loading</paper-spinner>
         <p hidden$="[[!isMultiple]]">Multiple files are not supported</p>
         <p hidden$="[[isZip]]">File is not a zip file</p>
 
-        <folder-browser files="[[fileStucture]]" on-download-file="_handleDownload"></folder-browser>
+        <folder-browser files="[[fileStructure]]" on-download-file="_handleDownload"></folder-browser>
       </template>
     </div>
   </template>
@@ -61,7 +61,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     scope.isZip = true;
     scope.isLoading = false;
     scope.isMultiple = false;
-    scope.fileStucture = undefined;
+    scope.fileStructure = undefined;
 
     function reset() {
       scope.isZip = true;
@@ -95,14 +95,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       var filename = e.detail.filename;
       scope.$.unzip.getFileContent(filename)
       .then(function(file) {
-        console.log(file);
         var url = URL.createObjectURL(file);
         var a = document.createElement('a');
         a.href = url;
         a.download = file.name;
         Polymer.dom(scope.root).appendChild(a);
         var clickEvent = document.createEvent('MouseEvent');
-        clickEvent.initMouseEvent('click', true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+        clickEvent.initMouseEvent('click', true, true, window, 0, 0, 0, 0, 0, false, false,
+          false, false, 0, null);
         a.dispatchEvent(clickEvent);
         Polymer.dom(scope.root).removeChild(a);
       })
