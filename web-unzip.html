@@ -20,10 +20,7 @@ the License.
 This element is in active development and it's not yet ready to be used.
 
 TODO:
-- read all files
-- add element's property to automatically read all file data
 - add progress events / properties.
-- add test
 
 ### Killing the web worker
 The zip.js library uses web worker to unzip files. Each time the `file` property change
@@ -135,8 +132,32 @@ h.avail_out);var G=new Uint8Array(E);z.forEach(function(a){G.set(a,x);x+=a.lengt
     </script>
   </template>
   <script>
+'use strict';
 Polymer({
   is: 'web-unzip',
+
+  /**
+   * Fired when the list of files has been read from the zip file.
+   *
+   * @event web-unzip-file-structure
+   * @property {Array} fileStructure Created structure. Depending on `flatStructure` property it
+   * will be flat or complex structure.
+   */
+  /**
+   * Fired when all files were read.
+   * The Entry elements in the structure will not contain `content` property with a File object.
+   * They also will not contain `getData` function anymore.
+   *
+   * @event web-unzip-read
+   * @property {Array} fileStructure Created structure. Depending on `flatStructure` property it
+   * will be flat or complex structure.
+   */
+  /**
+   * Fired when error occurred anywhere in the element.
+   *
+   * @event error
+   * @param {String} message An error message.
+   */
   properties: {
     /**
      * A file object returned by the `<file type="input">` or drop event.
@@ -441,7 +462,12 @@ Polymer({
       }
     }
   },
-
+  /**
+   * Creates an Entry-like object for a directory.
+   * It has similar structure for the zip.js' Entry object.
+   *
+   * @param {String} path Path to a folder
+   */
   _createDirectory: function(path) {
     var time = Date.now();
     var entry = {
@@ -516,7 +542,7 @@ Polymer({
     var structure = this.__flatStructure;
     var promises = structure.map(function(item) {
       if (item.directory) {
-        delete item.getData;
+        item.getData = undefined;
         return Promise.resolve(item);
       }
       return this._getEntryContent(item);
@@ -524,7 +550,7 @@ Polymer({
     return Promise.all(promises)
     .then(function() {
       return this.closeLastReader();
-    })
+    }.bind(this))
     .then(function() {
       this.fire('web-unzip-read', {
         fileStructure: this.fileStructure
@@ -570,7 +596,7 @@ Polymer({
           // type: How to extract type?
           lastModified: entry.lastModDateRaw
         });
-        delete entry.getData;
+        entry.getData = undefined;
         entry.content = file;
         resolve(entry);
       });
