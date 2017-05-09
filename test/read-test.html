@@ -71,7 +71,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           test('Read entry has `content` property', function() {
             return element.getAllData()
             .then(function(structure) {
-              assert.typeOf(structure[0].children[0].content, 'file', 'Entry.content is a file');
+              assert.typeOf(structure[0].children[0].content, 'blob', 'Entry.content is Blob');
             });
           });
 
@@ -121,15 +121,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             element._getEntryContent(entry)
             .then(function(entry) {
               assert.isObject(entry, 'Entry is an object');
-              assert.typeOf(entry.content, 'file', 'Entry.content is a file');
+              assert.typeOf(entry.content, 'blob', 'Entry.content is Blob');
               assert.isUndefined(entry.getData, 'Entry.getData is a undefined');
             });
           });
 
-          test('getFileContent returns a File obejct', function() {
+          test('getFileContent returns a Blob obejct', function() {
             return element.getFileContent(file)
             .then(function(result) {
-              assert.typeOf(result, 'file');
+              assert.typeOf(result, 'blob');
             });
           });
         });
@@ -167,7 +167,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           test('Read entry has `content` property', function() {
             return element.getAllData()
             .then(function(structure) {
-              assert.typeOf(structure[1].content, 'file', 'Entry.content is a file');
+              assert.typeOf(structure[1].content, 'blob', 'Entry.content is Blob');
             });
           });
 
@@ -217,15 +217,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             element._getEntryContent(entry)
             .then(function(entry) {
               assert.isObject(entry, 'Entry is an object');
-              assert.typeOf(entry.content, 'file', 'Entry.content is a file');
+              assert.typeOf(entry.content, 'blob', 'Entry.content is Blob');
               assert.isUndefined(entry.getData, 'Entry.getData is a undefined');
             });
           });
 
-          test('getFileContent returns a File obejct', function() {
+          test('getFileContent returns a Blob obejct', function() {
             return element.getFileContent(file)
             .then(function(result) {
-              assert.typeOf(result, 'file');
+              assert.typeOf(result, 'blob');
             });
           });
         });

@@ -14,13 +14,11 @@ function setupStructure(element, blob) {
   return new Promise(function(resolve, reject) {
     var callbackError;
     var callback = function(e) {
-      alert('a');
       element.removeEventListener('web-unzip-file-structure', callback);
       element.removeEventListener('error', callbackError);
       resolve(e.detail.fileStructure);
     };
     callbackError = function(e) {
-      alert('b');
       element.removeEventListener('error', callbackError);
       element.removeEventListener('web-unzip-file-structure', callback);
       reject(new Error(e.detail.message));

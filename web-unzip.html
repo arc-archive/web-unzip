@@ -226,7 +226,7 @@ Polymer({
   },
 
   _createWorker: function() {
-    if (navigator.appVersion.indexOf('MSIE 10')) {
+    if (navigator.appVersion.indexOf('MSIE 10') !== -1) {
       // if (!zip.Deflater) {
       //   zip.useWebWorkers = false;
       //   var script = document.createElement('script');
@@ -235,7 +235,7 @@ Polymer({
       // }
       zip.workerScripts = {
         deflater: ['zipjs/z-worker.js', 'deflate.js'],
-        deflater: ['zipjs/z-worker.js', 'inflate.js'],
+        inflater: ['zipjs/z-worker.js', 'inflate.js'],
       };
       return;
     }
@@ -295,7 +295,7 @@ Polymer({
    * @param {Array} entries List of entries.
    */
   _entriesHandler: function(entries) {
-    alert('_entriesHandler');
+    // alert('_entriesHandler');
     if (entries.length === 0) {
       this.fire('web-unzip-file-structure', {
         fileStructure: []
@@ -564,7 +564,10 @@ Polymer({
         item.getData = undefined;
         return Promise.resolve(item);
       }
-      return this._getEntryContent(item);
+      return this._getEntryContent(item)
+      .then(function() {
+        return item;
+      });
     }, this);
     var content = this;
     return Promise.all(promises)
@@ -591,8 +594,8 @@ Polymer({
       return Promise.reject(new Error('File not found: ' + filename));
     }
     return this._getEntryContent(entry)
-    .then(function(entry) {
-      return entry.content;
+    .then(function(content) {
+      return content;
     });
   },
   /**
@@ -612,13 +615,11 @@ Polymer({
     return new Promise(function(resolve) {
       var writer = new zip.BlobWriter();
       entry.getData(writer, function(data) {
-        var file = new File([data], entry.name, {
-          // type: How to extract type?
-          lastModified: entry.lastModDateRaw
-        });
+        data.lastModified = entry.lastModDateRaw;
+        data.name = entry.name;
         entry.getData = undefined;
-        entry.content = file;
-        resolve(entry);
+        entry.content = data;
+        resolve(data);
       });
     });
   },
