@@ -18,7 +18,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <script src="../../iron-test-helpers/test-helpers.js"></script>
     <script src="../../iron-test-helpers/mock-interactions.js"></script>
 
-    <!-- Step 1: import the element to test -->
+    <link rel="import" href="../../fetch-polyfill/fetch-polyfill.html">
     <link rel="import" href="../web-unzip.html">
   </head>
   <body>
@@ -30,14 +30,76 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </test-fixture>
 
     <script>
-    /* global suite, test, fixture, assert */
+    /* global fixture, assert */
     suite('basic', function() {
       var element;
       setup(function() {
         element = fixture('basic');
       });
-      test('`web-unzip` should be initialized', function() {
-        assert.equal(element.isAttached, true, 'element.isAttached equals true');
+
+      test('_pwd computes file\'s directory', function() {
+        var parent = element._pwd('path/to/a/file.txt');
+        assert.equal(parent, 'path/to/a/');
+      });
+
+      test('_pwd computes parent directory', function() {
+        var parent = element._pwd('path/to/a/folder/');
+        assert.equal(parent, 'path/to/a/');
+      });
+
+      test('_computeName computes the name of a file in a root path', function() {
+        var file = {
+          directory: false,
+          filename: 'file.txt'
+        };
+        var name = element._computeName(file);
+        assert.equal(name, 'file.txt');
+      });
+
+      test('_computeName computes the name of a file in a deep path', function() {
+        var file = {
+          directory: false,
+          filename: '/path/to/a/file.txt'
+        };
+        var name = element._computeName(file);
+        assert.equal(name, 'file.txt');
+      });
+
+      test('_computeName computes the name of a folder in a root path', function() {
+        var file = {
+          directory: true,
+          filename: 'folder/'
+        };
+        var name = element._computeName(file);
+        assert.equal(name, 'folder');
+      });
+
+      test('_computeName computes the name of a folder in a deep path', function() {
+        var file = {
+          directory: true,
+          filename: '/path/to/a/folder/'
+        };
+        var name = element._computeName(file);
+        assert.equal(name, 'folder');
+      });
+
+      test('_createDirectory creates a pseudo-entry object for directory', function() {
+        var path = 'path/to/a/folder/';
+        var entry = element._createDirectory(path);
+        assert.isObject(entry, 'entry is an object');
+        assert.typeOf(entry.lastModDate, 'date', 'entry.lastModDate is a Date');
+        assert.equal(entry.filename, path, 'entry.filename equals argument\'s path');
+        assert.equal(entry.name, 'folder', 'entry.name equals folder');
+      });
+
+      test('_createStructurePath creates a path of children', function() {
+        var path = 'path/folder/';
+        var structure = [];
+        var entry = element._createStructurePath(path, structure);
+        assert.lengthOf(structure, 1, 'structure.length equals 1');
+        assert.lengthOf(structure[0].children, 1, 'children\'s length equals 1');
+        assert.equal(structure[0].children[0].name, 'folder', 'child name is folder');
+        assert.deepEqual(structure[0].children[0], entry, 'child equals entry');
       });
     });
     </script>

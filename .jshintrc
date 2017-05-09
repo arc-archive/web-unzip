@@ -17,6 +17,7 @@
   "mocha": true,
   "globals": {
     "Polymer": true,
-    "zip": true
+    "zip": true,
+    "Promise": true
   }
 }
