@@ -1,0 +1,170 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../web-component-tester/browser.js"></script>
+    <script src="../../iron-test-helpers/test-helpers.js"></script>
+    <script src="../../iron-test-helpers/mock-interactions.js"></script>
+
+    <link rel="import" href="../../fetch-polyfill/fetch-polyfill.html">
+    <link rel="import" href="../web-unzip.html">
+    <script src="common.js"></script>
+  </head>
+  <body>
+
+    <test-fixture id="basic">
+      <template>
+        <web-unzip></web-unzip>
+      </template>
+    </test-fixture>
+
+    <test-fixture id="flat">
+      <template>
+        <web-unzip flat-structure></web-unzip>
+      </template>
+    </test-fixture>
+
+    <script>
+    /* global fixture, assert, getFile, setupStructure */
+    suite('Structure tests', function() {
+      suite('Reading file structure', function() {
+        var element;
+        var blob;
+        var structure;
+        suiteSetup(function() {
+          return getFile('/test1.zip')
+          .then(function(data) {
+            blob = data;
+          });
+        });
+
+        setup(function() {
+          element = fixture('basic');
+          return setupStructure(element, blob)
+          .then(function(data) {
+            structure = data;
+          });
+        });
+
+        test('Reads zip file structure', function() {
+          assert.isArray(structure, 'fileStructure is an array');
+          assert.lengthOf(structure, 2, 'fileStructure is size of 1');
+        });
+
+        test('Root contains a file', function() {
+          var hasFile = false;
+          for (var i = 0, len = structure.length; i < len; i++) {
+            if (!structure[i].directory) {
+              hasFile = true;
+              assert.equal(structure[i].filename, 'file-root.txt');
+              break;
+            }
+          }
+          assert.isTrue(hasFile, 'Root contains a file');
+        });
+
+        test('Entry contains a name property', function() {
+          assert.equal(structure[0].children[1].children[0].name, 'file-deep.txt');
+        });
+
+        test('Root contains a directory', function() {
+          var hasDirectory = false;
+          for (var i = 0, len = structure.length; i < len; i++) {
+            if (structure[i].directory) {
+              hasDirectory = true;
+              assert.equal(structure[i].filename, 'test1/');
+            }
+          }
+          assert.isTrue(hasDirectory, 'Root contains a directory');
+        });
+
+        test('Sub-folder contains a file', function() {
+          structure = structure[0].children;
+          var hasFile = false;
+          for (var i = 0, len = structure.length; i < len; i++) {
+            if (!structure[i].directory) {
+              hasFile = true;
+              assert.equal(structure[i].filename, 'test1/file-folder-2.txt');
+              break;
+            }
+          }
+          assert.isTrue(hasFile, 'Root contains a file');
+        });
+
+        test('Sub-folder contains a directory', function() {
+          structure = structure[0].children;
+          var hasDirectory = false;
+          for (var i = 0, len = structure.length; i < len; i++) {
+            if (structure[i].directory) {
+              hasDirectory = true;
+              assert.equal(structure[i].filename, 'test1/folder2/');
+              break;
+            }
+          }
+          assert.isTrue(hasDirectory, 'Root contains a file');
+        });
+
+        test('File is in deep path', function() {
+          assert.equal(structure[0].children[1].children[0].filename,
+              'test1/folder2/file-deep.txt');
+        });
+      });
+
+      suite('Reading file flat structure', function() {
+        var element;
+        var blob;
+        var structure;
+        suiteSetup(function() {
+          return getFile('/test1.zip')
+          .then(function(data) {
+            blob = data;
+          });
+        });
+
+        setup(function() {
+          element = fixture('flat');
+          return setupStructure(element, blob)
+          .then(function(data) {
+            structure = data;
+          });
+        });
+
+        test('Reads zip file structure', function() {
+          assert.isArray(structure, 'fileStructure is an array');
+          assert.lengthOf(structure, 5, 'fileStructure is size of 1');
+        });
+
+        test('Has all files included', function() {
+          var files = [
+            'file-root.txt',
+            'test1/',
+            'test1/file-folder-2.txt',
+            'test1/folder2/',
+            'test1/folder2/file-deep.txt'
+          ];
+          structure.forEach(function(entry) {
+            var fname = entry.filename;
+            var index = files.indexOf(fname);
+            assert.isAbove(index, -1, 'filename exists in expected files');
+            files.splice(index, 1);
+          });
+          assert.lengthOf(files, 0, 'Expected files list is empty');
+        });
+      });
+    });
+    </script>
+
+  </body>
+</html>

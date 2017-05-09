@@ -1,6 +1,6 @@
 {
   "name": "web-unzip",
-  "version": "0.0.1",
+  "version": "0.1.1",
   "license": "Apache-2.0 OR CC-BY-4.0",
   "description": "A web component that unzips files",
   "devDependencies": {
@@ -16,7 +16,6 @@
   "author": "The Advanced REST client authors <arc@mulesoft.com>",
   "scripts": {
     "serve": "node_modules/.bin/polymer serve",
-    "lint": "node_modules/.bin/polymer lint web-unzip.html",
     "test-sauce": "node_modules/.bin/polymer test --plugin sauce --job-name \"web-unzip:local-test\"",
     "test": "node_modules/.bin/polymer test",
     "deps": "npm install --quiet && bower install --quiet",

@@ -1,0 +1,237 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../web-component-tester/browser.js"></script>
+    <script src="../../iron-test-helpers/test-helpers.js"></script>
+    <script src="../../iron-test-helpers/mock-interactions.js"></script>
+
+    <link rel="import" href="../../fetch-polyfill/fetch-polyfill.html">
+    <link rel="import" href="../web-unzip.html">
+    <script src="common.js"></script>
+  </head>
+  <body>
+
+    <test-fixture id="basic">
+      <template>
+        <web-unzip></web-unzip>
+      </template>
+    </test-fixture>
+
+    <test-fixture id="flat">
+      <template>
+        <web-unzip flat-structure></web-unzip>
+      </template>
+    </test-fixture>
+
+    <script>
+    /* global fixture, assert, sinon, getFile, setupStructure */
+    suite('Read tests', function() {
+      suite('Basic', function() {
+        suite('Reading all files', function() {
+          var element;
+          var blob;
+          var structure;
+          suiteSetup(function() {
+            return getFile('/test1.zip')
+            .then(function(data) {
+              blob = data;
+            });
+          });
+
+          setup(function() {
+            element = fixture('basic');
+            return setupStructure(element, blob)
+            .then(function(data) {
+              structure = data;
+            });
+          });
+
+          test('Fires web-unzip-read custom event', function() {
+            var spy = sinon.stub();
+            element.addEventListener('web-unzip-read', spy);
+            return element.getAllData()
+            .then(function() {
+              assert.isTrue(spy.calledOnce, 'Event has been called once');
+            });
+          });
+
+          test('Read entry has `content` property', function() {
+            return element.getAllData()
+            .then(function(structure) {
+              assert.typeOf(structure[0].children[0].content, 'blob', 'Entry.content is Blob');
+            });
+          });
+
+          test('Read entry doesn\'t have `getData` function', function() {
+            return element.getAllData()
+            .then(function(structure) {
+              assert.isUndefined(structure[0].children[0].getData, 'Entry.getData is a undefined');
+            });
+          });
+
+          test('Read entry terminates the worker', function() {
+            return element.getAllData()
+            .then(function() {
+              assert.isUndefined(element._zipReader, '_zipReader is a undefined');
+            });
+          });
+        });
+
+        suite('Reading a file', function() {
+          var element;
+          var blob;
+          var structure;
+          var file = 'test1/file-folder-2.txt';
+
+          suiteSetup(function() {
+            return getFile('/test1.zip')
+            .then(function(data) {
+              blob = data;
+            });
+          });
+
+          setup(function() {
+            element = fixture('basic');
+            return setupStructure(element, blob)
+            .then(function(data) {
+              structure = data;
+            });
+          });
+
+          test('_getEntry returns an Entry', function() {
+            var entry = element._getEntry(file);
+            assert.isObject(entry);
+          });
+
+          test('_getEntryContent returns transformed Entry', function() {
+            var entry = element._getEntry(file);
+            element._getEntryContent(entry)
+            .then(function(entry) {
+              assert.isObject(entry, 'Entry is an object');
+              assert.typeOf(entry.content, 'blob', 'Entry.content is Blob');
+              assert.isUndefined(entry.getData, 'Entry.getData is a undefined');
+            });
+          });
+
+          test('getFileContent returns a Blob obejct', function() {
+            return element.getFileContent(file)
+            .then(function(result) {
+              assert.typeOf(result, 'blob');
+            });
+          });
+        });
+      });
+
+      suite('Flat structure', function() {
+        suite('Reading all files', function() {
+          var element;
+          var blob;
+          var structure;
+          suiteSetup(function() {
+            return getFile('/test1.zip')
+            .then(function(data) {
+              blob = data;
+            });
+          });
+
+          setup(function() {
+            element = fixture('flat');
+            return setupStructure(element, blob)
+            .then(function(data) {
+              structure = data;
+            });
+          });
+
+          test('Fires web-unzip-read custom event', function() {
+            var spy = sinon.stub();
+            element.addEventListener('web-unzip-read', spy);
+            return element.getAllData()
+            .then(function() {
+              assert.isTrue(spy.calledOnce, 'Event has been called once');
+            });
+          });
+
+          test('Read entry has `content` property', function() {
+            return element.getAllData()
+            .then(function(structure) {
+              assert.typeOf(structure[1].content, 'blob', 'Entry.content is Blob');
+            });
+          });
+
+          test('Read entry doesn\'t have `getData` function', function() {
+            return element.getAllData()
+            .then(function(structure) {
+              assert.isUndefined(structure[1].getData, 'Entry.getData is a undefined');
+            });
+          });
+
+          test('Read entry terminates the worker', function() {
+            return element.getAllData()
+            .then(function() {
+              assert.isUndefined(element._zipReader, '_zipReader is a undefined');
+            });
+          });
+        });
+
+        suite('Reading a file', function() {
+          var element;
+          var blob;
+          var structure;
+          var file = 'test1/file-folder-2.txt';
+
+          suiteSetup(function() {
+            return getFile('/test1.zip')
+            .then(function(data) {
+              blob = data;
+            });
+          });
+
+          setup(function() {
+            element = fixture('flat');
+            return setupStructure(element, blob)
+            .then(function(data) {
+              structure = data;
+            });
+          });
+
+          test('_getEntry returns an Entry', function() {
+            var entry = element._getEntry(file);
+            assert.isObject(entry);
+          });
+
+          test('_getEntryContent returns transformed Entry', function() {
+            var entry = element._getEntry(file);
+            element._getEntryContent(entry)
+            .then(function(entry) {
+              assert.isObject(entry, 'Entry is an object');
+              assert.typeOf(entry.content, 'blob', 'Entry.content is Blob');
+              assert.isUndefined(entry.getData, 'Entry.getData is a undefined');
+            });
+          });
+
+          test('getFileContent returns a Blob obejct', function() {
+            return element.getFileContent(file)
+            .then(function(result) {
+              assert.typeOf(result, 'blob');
+            });
+          });
+        });
+      });
+    });
+    </script>
+
+  </body>
+</html>

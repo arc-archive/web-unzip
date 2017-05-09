@@ -34,7 +34,7 @@
         this.parentPath = '/';
       },
 
-      _openFolder: function (e) {
+      _openFolder: function(e) {
         this.folder = undefined;
         this.currentName = undefined;
         this.parentPath = '/';
@@ -145,7 +145,7 @@
         return directory ? 'icons:folder' : 'editor:insert-drive-file';
       },
 
-      computeClass: function (directory) {
+      computeClass: function(directory) {
         return directory ? 'folder-name' : 'file-name';
       },
 
@@ -155,7 +155,7 @@
           return this.downloadFile(e);
         }
         var file = model.filename;
-        if (file[file.length -1] === '/') {
+        if (file[file.length - 1] === '/') {
           file = file.substr(0, file.length - 1);
         }
         var path = file.split('/');
@@ -169,7 +169,7 @@
       downloadFile: function(e) {
         e.preventDefault();
         e.stopPropagation();
-        
+
         var model = e.model.get('item');
         this.fire('download-file', {
           filename: model.filename
