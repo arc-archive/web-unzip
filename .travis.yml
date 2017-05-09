@@ -4,19 +4,24 @@ dist: trusty
 node_js: stable
 before_script:
 - npm install --silent bower polymer-cli
-- ./node_modules/.bin/bower install --silent
+- "./node_modules/.bin/bower install --silent"
 addons:
   sauce_connect: true
 script:
 - npm run lint
-- ./node_modules/.bin/polymer test --plugin sauce --job-name "web-unzip:${TRAVIS_BRANCH}" --build-number=${TRAVIS_BUILD_NUMBER}
+- ./node_modules/.bin/polymer test --plugin sauce --job-name "web-unzip:${TRAVIS_BRANCH}"
+  --build-number=${TRAVIS_BUILD_NUMBER}
 cache:
   directories:
   - bower_components
   - node_modules
 branches:
   only:
-    - stage
-    - develop
+  - stage
+  - develop
 after_success:
-  - node tasks/ci.js
+- node tasks/ci.js
+env:
+  global:
+  - secure: otknrbbnx/Q+bbpnazc9jpM7oLgk4gq8Y2NJ+AkQ2IcBuiQY8wt5ZaFAvlqWDonsbBrVnNukUDRHZ7HkeYo6rLFmvoNBneUawec/1z895Wc2o4LCtbvdE6rwgzvUm4TZDjxIsMpiRunPYXHKVAofNz/p8ONiWaChwAm8yHmtcOBhqnZb5ntCr9vYTw5Sq7iiGUEMAy64K7S+SYOlOSWLE154ENsHPwi0SiCqveoe1Hp4/F0Q5txE9D/zbtP1czgBMlGOLUahyv3oTlPdL2I+ffXG1HUNuPwerx9e7PiZl0lHCc2qi3p0mw4ko6/x/QO97py/jrjqHyBiic73hHa739W60VH8GY0/2g2ngiEZ3QcTjgmxN6zP50o30P193YG6HKXwvBOyo3uKzLAHVE+tfRzqtxvc/cigqaeqqFR4VoC/QhOyICJjtAL4eaAOvf6o//z4WZo1TT5MxraGGnBsphs9JYnOkutxHHba78lLEd6gNNDB8P49BP2QAq72NN2Ib0c+/QKzjy48Qpd2bJBOPb+u75/I9LD4d8alOXkeZiNw9/kl4Im3xeGaaxyLptir7jU5EnBJZYcT1PEyzH6mtNQtu7mdzsV0dl7tNe9iDy/1f18mYsOk8x10UwlL3vfHoxdX9LHfQLP+IsGwqS1hNjknrztoKg/kOv6qD2ePR4w=
+  - secure: vkZ/e9Xzm4IRiGlI/D3+FDBXaVncfc3oxVmUcwpSRV8GpTXqgtjyo8CLXtrSWOQc7sIi6mNFm/ML8lYXdSvDM/ZUSsVgvQDIo/e1DL4AvjsS7bXDwEtqWuJkMCTdZCal0zNvGXOMv/fs1r4fSG1E/Pk345lN8B/GOQVP8qF9ZNwzcwwdQMGW5JmMofi5AA0JqMTmeg8cH+FBZgbv3PghYQKjby5S+xwiFVGsbZcwytElVqYza672Hjn1vP15m/VNTZUgri5eUJ8Ak/G3Z3EsGawwsxnejc2158ZxBGrkHHQDJNyoKLxID0aJnvA/JUHWWkDNt0c9ZwVhwDfPQgB3O/sWSb2g7xO2ZXNkO0IuzLDKDeeDTExNRgHxuORo7NyD2IwHCTBMHPRGyxR7Y0AvTpyQ6VHhdhnBCGJ2H2Dhlt8czzmCtT3Sl0omE0oJ1mRsYR7GJteA67fscAk6X45+nWgYtGLXQuf9AI1WBJZQzx0ly7SOJiF4FgXd9nmzqn4Uec7tleFH490trWtw8UousFX2wmpz9BzlMBeLlCOlUcFs8lwTh4VPN3TYXiPwKS6f6oGF9hE6DM2/WtGaarg8SoJBZFzfvXGg9+5etR2Pc3iW8R8zC6NCuUbH6y7sGxknbfbJn5IJ6Fq89DXHr/SUXQH1jMreOcd6voG55jIN8D8=
