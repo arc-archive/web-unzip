@@ -1,3 +1,13 @@
+<a name="0.1.2"></a>
+## [0.1.2](https://github.com/advanced-rest-client/web-unzip/compare/0.1.1...v0.1.2) (2017-05-09)
+
+
+### Fix
+
+* Now Entries will have name also when using flat structure ([60c7996bea9f2a903d929be1ac613badc647271b](https://github.com/advanced-rest-client/web-unzip/commit/60c7996bea9f2a903d929be1ac613badc647271b))
+
+
+
 <a name="0.1.1"></a>
 ## 0.1.1 (2017-05-09)
 

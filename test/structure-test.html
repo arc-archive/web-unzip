@@ -156,11 +156,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           ];
           structure.forEach(function(entry) {
             var fname = entry.filename;
+            console.log(fname);
             var index = files.indexOf(fname);
             assert.isAbove(index, -1, 'filename exists in expected files');
             files.splice(index, 1);
           });
           assert.lengthOf(files, 0, 'Expected files list is empty');
+        });
+
+        test('Entry contains a name property', function() {
+          assert.equal(structure[3].name, 'file-deep.txt');
         });
       });
     });
