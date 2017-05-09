@@ -343,7 +343,7 @@ Polymer({
       });
       return;
     }
-
+    this._setEntriesNames(entries);
     if (this.flatStructure) {
       this._setFileStructure(entries);
       this.__flatStructure = entries;
@@ -367,6 +367,16 @@ Polymer({
     });
   },
   /**
+   * Sets a name property to each Entry object.
+   */
+  _setEntriesNames: function(entries) {
+    var len = entries.length;
+    for (var i = 0; i < len; i++) {
+      entries[i].name = this._computeName(entries[i]);
+    }
+  },
+
+  /**
    * Creates a structure of filesystem of list of all entries in the zip file.
    *
    * @param {Array} entries Result of zip.js read.
@@ -378,7 +388,6 @@ Polymer({
     var len = entries.length;
     for (var i = 0; i < len; i++) {
       var entry = entries[i];
-      entry.name = this._computeName(entry);
       if (entry.directory) {
         entry.children = [];
         if (entry.filename in _dirs) {
