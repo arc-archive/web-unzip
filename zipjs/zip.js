@@ -290,7 +290,7 @@
     callback(new Blob(this.data, { type: this.contentType }));
   };
 
-	/** 
+	/**
 	 * inflate/deflate core functions
 	 * @param worker {Worker} web worker for the task.
 	 * @param initialMessage {Object} initial message to be sent to the worker. should contains

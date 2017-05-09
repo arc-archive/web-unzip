@@ -17,10 +17,24 @@ the License.
 <!--
 `<web-unzip>` A web component that unzips files.
 
-This element is in active development and it's not yet ready to be used.
+The elment, after assigning an array of files (either file from file input or
+from drop event) will read zip structure automatically. After structure is read
+it will set the `fileStructure` property and will fire
+`web-unzip-file-structure` custom event.
+It the `auto-read` attribute is set (`autoRead` property) then it will
+automatically ready files content and will send `web-unzip-read` custom event.
+Otherwise `getAllData()` or `getFileContent()` function must be called
+to read all / entry data.
 
-TODO:
-- add progress events / properties.
+## Dependency files
+This component uses web workers. Files required by the workers are included
+into the element body and in most cases it doesn't depend on external files.
+However, IE10 doesnt work this way. Or at least zip.js worker script and
+it throws unhandled error in the web worker. For IE10 and Safari it will
+import `inflate.js` and `deflate.js` scripts from `zipjs` folder.
+
+Make sure that the build process copies this two libraries into
+`bower_components/web-unzip/zipjs` directory.
 
 ### Killing the web worker
 The zip.js library uses web worker to unzip files. Each time the `file` property change
@@ -210,10 +224,31 @@ Polymer({
       value: function() {
         return this._errorHandler.bind(this);
       }
+    },
+
+    _normalBrowser: {
+      type: Boolean,
+      value: function() {
+        var ie10 = navigator.appVersion.indexOf('MSIE 10') !== -1;
+        if (ie10) {
+          return false;
+        }
+        var ua = navigator.userAgent.toLowerCase();
+        if (ua.indexOf('safari') !== -1) {
+          if (ua.indexOf('chrome') === -1) {
+            return false;
+          }
+        }
+        return true;
+      }
     }
   },
 
   observers: ['_fileChnaged(file)'],
+
+  ready: function() {
+    this._loadIeScripts();
+  },
 
   detached: function() {
     this.closeLastReader();
@@ -224,19 +259,24 @@ Polymer({
     this._setResult(undefined);
     this._setFileStructure(undefined);
   },
+  /**
+   * For some reason IE 10 doesn't work with zip.js and web workers.
+   * After few hours I'm giving up. zip.js will work in main thread.
+   */
+  _loadIeScripts: function() {
+    if (!zip.Deflater && !this._normalBrowser) {
+      var script = document.createElement('script');
+      script.src = this.resolveUrl('zipjs/deflate.js');
+      Polymer.dom(this.root).appendChild(script);
+      script = document.createElement('script');
+      script.src = this.resolveUrl('zipjs/inflate.js');
+      Polymer.dom(this.root).appendChild(script);
+      zip.useWebWorkers = false;
+    }
+  },
 
   _createWorker: function() {
     if (navigator.appVersion.indexOf('MSIE 10') !== -1) {
-      // if (!zip.Deflater) {
-      //   zip.useWebWorkers = false;
-      //   var script = document.createElement('script');
-      //   script.src = 'zipjs/deflate.js';
-      //   Polymer.dom(this.root).appendChild(script);
-      // }
-      zip.workerScripts = {
-        deflater: ['zipjs/z-worker.js', 'deflate.js'],
-        inflater: ['zipjs/z-worker.js', 'inflate.js'],
-      };
       return;
     }
     if (this._workerUrl) {
@@ -283,8 +323,10 @@ Polymer({
     return new Promise(function(resolve) {
       this._zipReader.close(function() {
         this._zipReader = undefined;
-        window.URL.revokeObjectURL(this._workerUrl);
-        this._workerUrl = undefined;
+        if (this._workerUrl) {
+          window.URL.revokeObjectURL(this._workerUrl);
+          this._workerUrl = undefined;
+        }
         resolve();
       }.bind(this));
     }.bind(this));
@@ -295,7 +337,6 @@ Polymer({
    * @param {Array} entries List of entries.
    */
   _entriesHandler: function(entries) {
-    // alert('_entriesHandler');
     if (entries.length === 0) {
       this.fire('web-unzip-file-structure', {
         fileStructure: []
