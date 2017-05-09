@@ -250,12 +250,12 @@ Polymer({
     }
     this._createWorker();
     this.closeLastReader()
-      .then(function() {
-        zip.createReader(new zip.BlobReader(source), function(zipReader) {
-          this._zipReader = zipReader;
-          zipReader.getEntries(this._entriesListener);
-        }.bind(this), this._errorListener);
-      }.bind(this));
+    .then(function() {
+      zip.createReader(new zip.BlobReader(source), function(zipReader) {
+        this._zipReader = zipReader;
+        zipReader.getEntries(this._entriesListener);
+      }.bind(this), this._errorListener);
+    }.bind(this));
     //READ: https://gildas-lormeau.github.io/zip.js/core-api.html
   },
   /**
@@ -533,6 +533,9 @@ Polymer({
    * Note, this can be called only once per zip file change.
    * After calling this function the web worker will be closed and further reads will be
    * impossible.
+   *
+   * @return {Promise} Resolved promise with updated `fileStructure` object. Each Entry object
+   * will contain `content` with File object created from the corresponding file;
    */
   getAllData: function() {
     if (!this._zipReader) {
@@ -547,16 +550,17 @@ Polymer({
       }
       return this._getEntryContent(item);
     }, this);
+    var content = this;
     return Promise.all(promises)
     .then(function() {
-      return this.closeLastReader();
-    }.bind(this))
+      return content.closeLastReader();
+    })
     .then(function() {
-      this.fire('web-unzip-read', {
-        fileStructure: this.fileStructure
+      content.fire('web-unzip-read', {
+        fileStructure: content.fileStructure
       });
-      return this.fileStructure;
-    }.bind(this));
+      return content.fileStructure;
+    });
   },
   /**
    * Reads content of a file and when promise resolves it returns a Blob
