@@ -27,15 +27,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <link rel="import" href="folder-browser.html">
 
   <style is="custom-style" include="demo-pages-shared-styles">
+  .vertical-section-container {
+    max-width: 600px;
+  }
 
-    .vertical-section-container {
-      max-width: 600px;
-    }
-
-    h1 {
-      @apply(--paper-font-title);
-    }
-
+  h1 {
+    @apply --paper-font-title;
+  }
   </style>
 </head>
 <body unresolved>
@@ -56,7 +54,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </template>
   <script>
   (function(scope) {
-    var URL = window.webkitURL || window.mozURL || window.URL;
+    var URL = window.mozURL || window.URL;
     scope.file = undefined;
     scope.isZip = true;
     scope.isLoading = false;
