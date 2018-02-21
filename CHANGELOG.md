@@ -1,3 +1,17 @@
+<a name="0.1.4"></a>
+## [0.1.4](https://github.com/advanced-rest-client/web-unzip/compare/0.1.2...0.1.4) (2018-02-21)
+
+
+### Fix
+
+* Fixes #1 - libraries loading in Safari. ([0e5b97772e37b03f91b8b0d4242c3128bcef7716](https://github.com/advanced-rest-client/web-unzip/commit/0e5b97772e37b03f91b8b0d4242c3128bcef7716)), closes [#1](https://github.com/advanced-rest-client/web-unzip/issues/1)
+
+### Update
+
+* Updated demo page. ([751178f8dd98db34aeca4dd23277dad335715621](https://github.com/advanced-rest-client/web-unzip/commit/751178f8dd98db34aeca4dd23277dad335715621))
+
+
+
 <a name="0.1.3"></a>
 ## [0.1.3](https://github.com/advanced-rest-client/web-unzip/compare/0.1.2...v0.1.3) (2017-05-09)
 

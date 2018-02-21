@@ -246,7 +246,7 @@ Polymer({
 
   observers: ['_fileChnaged(file)'],
 
-  ready: function() {
+  created: function() {
     this._loadIeScripts();
   },
 
@@ -264,19 +264,29 @@ Polymer({
    * After few hours I'm giving up. zip.js will work in main thread.
    */
   _loadIeScripts: function() {
-    if (!zip.Deflater && !this._normalBrowser) {
+    if (this._normalBrowser) {
+      return;
+    }
+    zip.useWebWorkers = false;
+    if (!zip.Deflater) {
       var script = document.createElement('script');
       script.src = this.resolveUrl('zipjs/deflate.js');
       Polymer.dom(this.root).appendChild(script);
-      script = document.createElement('script');
-      script.src = this.resolveUrl('zipjs/inflate.js');
-      Polymer.dom(this.root).appendChild(script);
-      zip.useWebWorkers = false;
+      console.info('Adding Deflate script to main thread.');
+    }
+    if (!zip.Inflater) {
+      var iScript = document.createElement('script');
+      iScript.src = this.resolveUrl('zipjs/inflate.js');
+      Polymer.dom(this.root).appendChild(iScript);
+      console.info('Adding Inflate script to main thread.');
     }
   },
 
   _createWorker: function() {
-    if (navigator.appVersion.indexOf('MSIE 10') !== -1) {
+    if (!this._normalBrowser) {
+      if (!zip.Inflater) {
+        this._loadIeScripts();
+      }
       return;
     }
     if (this._workerUrl) {
@@ -300,8 +310,11 @@ Polymer({
       this.reset();
       return;
     }
-    this._createWorker();
-    this.closeLastReader()
+    
+    return this.closeLastReader()
+    .then(function() {
+      this._createWorker();
+    }.bind(this))
     .then(function() {
       zip.createReader(new zip.BlobReader(source), function(zipReader) {
         this._zipReader = zipReader;
