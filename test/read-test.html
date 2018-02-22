@@ -93,7 +93,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         suite('Reading a file', function() {
           var element;
           var blob;
-          var structure;
           var file = 'test1/file-folder-2.txt';
 
           suiteSetup(function() {
@@ -105,10 +104,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
           setup(function() {
             element = fixture('basic');
-            return setupStructure(element, blob)
-            .then(function(data) {
-              structure = data;
-            });
+            return setupStructure(element, blob);
           });
 
           test('_getEntry returns an Entry', function() {
@@ -116,12 +112,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             assert.isObject(entry);
           });
 
-          test('_getEntryContent returns transformed Entry', function() {
+          test('_getEntryContent returns Entry data', function() {
             var entry = element._getEntry(file);
-            element._getEntryContent(entry)
-            .then(function(entry) {
-              assert.isObject(entry, 'Entry is an object');
-              assert.typeOf(entry.content, 'blob', 'Entry.content is Blob');
+            return element._getEntryContent(entry)
+            .then(function(content) {
+              assert.typeOf(content, 'blob', 'Entry is a blob');
+              assert.typeOf(entry.content, 'blob', 'Sets content property on entry');
               assert.isUndefined(entry.getData, 'Entry.getData is a undefined');
             });
           });
@@ -214,9 +210,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
           test('_getEntryContent returns transformed Entry', function() {
             var entry = element._getEntry(file);
-            element._getEntryContent(entry)
-            .then(function(entry) {
-              assert.isObject(entry, 'Entry is an object');
+            return element._getEntryContent(entry)
+            .then(function(content) {
+              assert.typeOf(content, 'blob', 'Result with blob data');
               assert.typeOf(entry.content, 'blob', 'Entry.content is Blob');
               assert.isUndefined(entry.getData, 'Entry.getData is a undefined');
             });
