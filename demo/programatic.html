@@ -1,0 +1,100 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>web-unzip demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../file-drop/file-drop.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../../paper-styles/paper-styles.html">
+  <link rel="import" href="../../paper-spinner/paper-spinner.html">
+  <link rel="import" href="../web-unzip.html">
+
+  <style is="custom-style" include="demo-pages-shared-styles">
+  .vertical-section-container {
+    max-width: 600px;
+  }
+
+  h1 {
+    @apply --paper-font-title;
+  }
+  </style>
+</head>
+<body unresolved>
+  <template is="dom-bind" id="app">
+    <div class="vertical-section-container centered">
+      <input type="file" on-change="_processFile"/>
+
+      <template is="dom-if" if="[[fileStructure]]">
+        <section>
+          <h4>Files structure</h4>
+          <ul>
+            <template is="dom-repeat" items="[[fileStructure]]">
+              <li>[[item.name]] ([[item.size]] bytes)</li>
+            </template>
+          </ul>
+        </section>
+      </template>
+    </div>
+  </template>
+  <script>
+  (function(scope) {
+    scope.fileStructure = undefined;
+
+    scope._processFile = function(e) {
+      if (!e.target.files[0]) {
+        return;
+      }
+      scope._unzip(e.target.files);
+    };
+
+    scope._onUnzip = function(e) {
+      scope.fileStructure = e.detail.fileStructure.map(function(item) {
+        return {
+          name: item.filename,
+          size: item.uncompressedSize
+        };
+      });
+    };
+
+    scope._onUnzipError = function(e) {
+      alert(e.detail.message);
+    };
+
+    scope._getUnzpiElement = function() {
+      var element = document.body.querySelector('web-unzip');
+      if (!element) {
+        element = document.createElement('web-unzip');
+        element.setAttribute('auto-read', '');
+        element.setAttribute('flat-structure', '');
+        element.addEventListener('web-unzip-read', scope._onUnzip);
+        element.addEventListener('error', scope._onUnzipError);
+      }
+      return element;
+    };
+
+    scope._unzip = function(files) {
+      var element = scope._getUnzpiElement();
+      element.file = files;
+    };
+
+    window.addEventListener('web-unzip-file-structure', scope._onFileStructureRead);
+  })(document.querySelector('#app'));
+  </script>
+</body>
+</html>
