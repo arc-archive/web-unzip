@@ -211,43 +211,31 @@ Polymer({
      *
      * Both `web-unzip-file-structure` and `web-unzip-read` custom events will be fired.
      */
-    autoRead: Boolean,
-
-    _entriesListener: {
-      type: Object,
-      value: function() {
-        return this._entriesHandler.bind(this);
-      }
-    },
-    _errorListener: {
-      type: Object,
-      value: function() {
-        return this._errorHandler.bind(this);
-      }
-    },
-
-    _normalBrowser: {
-      type: Boolean,
-      value: function() {
-        var ie10 = navigator.appVersion.indexOf('MSIE 10') !== -1;
-        if (ie10) {
-          return false;
-        }
-        var ua = navigator.userAgent.toLowerCase();
-        if (ua.indexOf('safari') !== -1) {
-          if (ua.indexOf('chrome') === -1) {
-            return false;
-          }
-        }
-        return true;
+    autoRead: Boolean
+  },
+  /**
+   * Checks if the browsers supports Web Workers from data:// scheme.
+   *
+   * @return {Boolean} True if web workers can be loaded.
+   */
+  get _normalBrowser() {
+    var ie10 = navigator.appVersion.indexOf('MSIE 10') !== -1;
+    if (ie10) {
+      return false;
+    }
+    var ua = navigator.userAgent.toLowerCase();
+    if (ua.indexOf('safari') !== -1) {
+      if (ua.indexOf('chrome') === -1) {
+        return false;
       }
     }
+    return true;
   },
 
   observers: ['_fileChnaged(file)'],
 
   created: function() {
-    this._loadIeScripts();
+    this._loadMainThreadScripts();
   },
 
   detached: function() {
@@ -259,11 +247,12 @@ Polymer({
     this._setResult(undefined);
     this._setFileStructure(undefined);
   },
+
   /**
-   * For some reason IE 10 doesn't work with zip.js and web workers.
-   * After few hours I'm giving up. zip.js will work in main thread.
+   * Loads zip library scripts into the main thread
+   * if current browser doesn't support web workers from the `data://` scheme.
    */
-  _loadIeScripts: function() {
+  _loadMainThreadScripts: function() {
     if (this._normalBrowser) {
       return;
     }
@@ -282,14 +271,15 @@ Polymer({
     }
   },
 
+  /**
+   * Creates a web worker from the element's content.
+   * It sets `_workerUrl` property with the URL to the worker file.
+   *
+   * It does nothing if the browser doesn't suppoort this way of creating
+   * web workers (Safari, IE10).
+   */
   _createWorker: function() {
-    if (!this._normalBrowser) {
-      if (!zip.Inflater) {
-        this._loadIeScripts();
-      }
-      return;
-    }
-    if (this._workerUrl) {
+    if (!this._normalBrowser || this._workerUrl) {
       return;
     }
     var blob = new Blob([this.$.worker.textContent]);
@@ -308,24 +298,53 @@ Polymer({
     var source = file[0];
     if (!source.type || source.type.indexOf('zip') === -1) {
       this.reset();
+      this._errorHandler('File not supported. File type is ' + source.type);
       return;
     }
-    
+
+    this.unzipFile(source);
+  },
+  /**
+   * Unzips the file.
+   *
+   * @param {Blob|File} file The file to unzip
+   * @return {Promise} Promise resolved to list of files in the file.
+   */
+  unzipFile: function(file) {
+    var context = this;
     return this.closeLastReader()
     .then(function() {
-      this._createWorker();
+      return this._unzipFileWorker(file);
     }.bind(this))
-    .then(function() {
-      zip.createReader(new zip.BlobReader(source), function(zipReader) {
-        this._zipReader = zipReader;
-        zipReader.getEntries(this._entriesListener);
-      }.bind(this), this._errorListener);
-    }.bind(this));
+    .then(function(entries) {
+      context._entriesHandler(entries);
+      return entries;
+    })
+    .catch(function(message) {
+      context._errorHandler(message);
+      throw new Error(message);
+    });
+  },
+
+  _unzipFileWorker: function(file) {
+    this._createWorker();
+    var context = this;
+    return new Promise(function(resolve, reject) {
+      zip.createReader(new zip.BlobReader(file), function(zipReader) {
+        context._zipReader = zipReader;
+        zipReader.getEntries(function(entries) {
+          resolve(entries);
+        });
+      }, function(message) {
+        reject(message);
+      });
+    });
     //READ: https://gildas-lormeau.github.io/zip.js/core-api.html
     //https://github.com/duanyao/zip.js/tree/integrate/WebContent
   },
+
   /**
-   * Manually close the web worker created by previous zip file read.
+   * Manually closes the web worker created by previous zip file read.
    *
    * @return {Promise} A promise that resolves when the web worker was killed.
    */
@@ -627,10 +646,7 @@ Polymer({
         item.getData = undefined;
         return Promise.resolve(item);
       }
-      return this._getEntryContent(item)
-      .then(function() {
-        return item;
-      });
+      return this._getEntryContent(item);
     }, this);
     var content = this;
     return Promise.all(promises)

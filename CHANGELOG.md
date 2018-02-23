@@ -1,3 +1,17 @@
+<a name="0.1.5"></a>
+## [0.1.5](https://github.com/advanced-rest-client/web-unzip/compare/0.1.4...0.1.5) (2018-02-23)
+
+
+### Fix
+
+* Fixed tests ([164fbb84080f156fb0111670596173e25b3c9ddd](https://github.com/advanced-rest-client/web-unzip/commit/164fbb84080f156fb0111670596173e25b3c9ddd))
+
+### Update
+
+* Updated loading scripts to main thread. Added API to read file ([cc2cd2bbf83f0a9efc7320f0188ab51a1c2c03f2](https://github.com/advanced-rest-client/web-unzip/commit/cc2cd2bbf83f0a9efc7320f0188ab51a1c2c03f2))
+
+
+
 <a name="0.1.4"></a>
 ## [0.1.4](https://github.com/advanced-rest-client/web-unzip/compare/0.1.2...0.1.4) (2018-02-21)
 
