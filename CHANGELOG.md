@@ -1,3 +1,9 @@
+<a name="0.1.6"></a>
+## [0.1.6](https://github.com/advanced-rest-client/web-unzip/compare/0.1.5...0.1.6) (2018-02-27)
+
+
+
+
 <a name="0.1.5"></a>
 ## [0.1.5](https://github.com/advanced-rest-client/web-unzip/compare/0.1.4...0.1.5) (2018-02-23)
 
