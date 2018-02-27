@@ -393,7 +393,7 @@ Polymer({
   },
 
   _errorHandler: function(message) {
-    console.error('ERROR', message);
+    console.warn('web-unzip error', message);
     this.fire('error', {
       message: message
     });
