@@ -11,6 +11,7 @@ function getFile(filename) {
 }
 
 function setupStructure(element, blob) {
+  blob = new Blob([blob], {type: 'application/zip'});
   return new Promise(function(resolve, reject) {
     var callbackError;
     var callback = function(e) {
