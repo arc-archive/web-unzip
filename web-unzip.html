@@ -223,18 +223,16 @@ Polymer({
     if (ie10) {
       return false;
     }
-    var ua = navigator.userAgent.toLowerCase();
-    if (ua.indexOf('safari') !== -1) {
-      if (ua.indexOf('chrome') === -1) {
-        return false;
-      }
-    }
     return true;
   },
 
   observers: ['_fileChnaged(file)'],
 
-  created: function() {
+  ready: function() {
+    this._loadMainThreadScripts();
+  },
+
+  attached: function() {
     this._loadMainThreadScripts();
   },
 
@@ -282,7 +280,7 @@ Polymer({
     if (!this._normalBrowser || this._workerUrl) {
       return;
     }
-    var blob = new Blob([this.$.worker.textContent]);
+    var blob = new Blob([this.$.worker.textContent], {type: 'text/javascript'});
     this._workerUrl = window.URL.createObjectURL(blob);
     zip.workerScripts = {
       deflater: [this._workerUrl],
