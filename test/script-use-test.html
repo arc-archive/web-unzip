@@ -35,11 +35,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     test('Extracts data from script use', function(done) {
       element = document.createElement('web-unzip');
-
       element.setAttribute('auto-read', '');
       element.setAttribute('flat-structure', '');
-
-      element.file = [blob];
       element.addEventListener('web-unzip-read', function(e) {
         assert.typeOf(e.detail.fileStructure, 'array');
         assert.lengthOf(e.detail.fileStructure, 5);
@@ -48,6 +45,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       element.addEventListener('error', function(e) {
         done(e.detail);
       });
+      var data = new Blob([blob], {type: 'application/zip'});
+      element.file = [data];
       document.body.appendChild(element);
     });
   });
